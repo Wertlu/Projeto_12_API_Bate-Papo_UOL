@@ -5,7 +5,7 @@
   "description": "Driven",
   "main": "serv.js",
   "scripts": {
-    "start": "npx nodemon serv.js",
+    "start": "npx nodemon app.js",
     "test": "jest -i --color --passWithNoTests"
   },
   "repository": {
@@ -23,11 +23,11 @@
     "axios": "^0.21.1",
     "bcrypt": "^5.0.1",
     "cors": "^2.8.5",
-    "dayjs": "^1.10.4",
+    "dayjs": "^1.10.7",
     "dotenv": "^9.0.2",
     "express": "^4.17.2",
     "jest": "^26.6.3",
-    "joi": "^17.4.0",
+    "joi": "^17.6.0",
     "jsonfile": "^6.1.0",
     "jsonwebtoken": "^8.5.1",
     "mongodb": "^4.3.1",
