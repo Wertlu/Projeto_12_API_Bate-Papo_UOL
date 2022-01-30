@@ -21,6 +21,12 @@ const participantSchema = joi.object({
     name: joi.string().required()
 });
 
+const messageSchema = joi.object({
+    to: joi.string().required(),
+    text: joi.string().required(),
+    type: joi.valid("message", "private_message")
+})
+
 //PARTICIPANTS ROUTE
 app.post("/participants", async (req, res) => {
     const validation = participantSchema.validate(req.body, { abortEarly: false });
@@ -29,39 +35,60 @@ app.post("/participants", async (req, res) => {
         return;
     }
 
-    const duplicate = await db.collection("participants").findOne({name: req.body.name});
+    const duplicate = await db.collection("participants").findOne({ name: req.body.name });
 
-    if(duplicate){
+    if (duplicate) {
         res.sendStatus(409);
         return;
-    }else{
-        try{
+    } else {
+        try {
             db.collection("participants").insertOne({
                 name: req.body.name, lastStatus: Date.now()
             });
             db.collection("messages").insertOne({
-                from: req.body.name, to: 'Todos', text: 'entra na sala...', type: 'status', time: dayjs().format('hh:mm:ss')
+                from: req.body.name,
+                to: 'Todos',
+                text: 'entra na sala...',
+                type: 'status',
+                time: dayjs().format('hh:mm:ss')
             })
             res.sendStatus(201);
-        }catch{
+        } catch {
             error.sendStatus(500);
         }
     }
-    
 });
 
 app.get("/participants", async (req, res) => {
-    try{
+    try {
         const allParticipants = await db.collection("participants").find().toArray();
         res.status(200).send(allParticipants);
-    }catch{
+    } catch {
         error.sendStatus(500);
     }
 });
 
 //MESSAGES ROUTE
 app.post("/messages", (req, res) => {
-    res.send('Server is Running');
+    const validation = messageSchema.validate(req.body, { abortEarly: false });
+    if (validation.error) {
+        res.sendStatus(422);
+        return;
+    }
+
+    try {
+        db.collection("messages").insertOne({
+            from: req.header("User"),
+            to: req.body.to,
+            text: req.body.text,
+            type: req.body.type,
+            time: dayjs().format('hh:mm:ss')
+        })
+        res.sendStatus(201);
+    } catch {
+        error.sendStatus(500);
+    }
+
 });
 app.get("/messages", (req, res) => {
     res.send('Server is Running');
