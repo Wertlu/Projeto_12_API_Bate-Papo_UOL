@@ -50,8 +50,13 @@ app.post("/participants", async (req, res) => {
     
 });
 
-app.get("/participants", (req, res) => {
-    res.send('Server is Running');
+app.get("/participants", async (req, res) => {
+    try{
+        const allParticipants = await db.collection("participants").find().toArray();
+        res.status(200).send(allParticipants);
+    }catch{
+        error.sendStatus(500);
+    }
 });
 
 //MESSAGES ROUTE
