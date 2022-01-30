@@ -88,10 +88,26 @@ app.post("/messages", (req, res) => {
     } catch {
         error.sendStatus(500);
     }
-
 });
-app.get("/messages", (req, res) => {
-    res.send('Server is Running');
+
+app.get("/messages", async (req, res) => {
+    try {
+        const messages = await db.collection("messages").find({
+            $or:
+                [
+                    { to: "todos" },
+                    { to: req.header("User") },
+                    { from: req.header("User") }
+                ]
+        }).toArray();
+        if (req.query.limit) {
+            res.status(200).send(messages.slice(-parseInt(req.query.limit)));
+        } else {
+            res.status(200).send(messages);
+        }
+    } catch {
+        error.sendStatus(500);
+    }
 });
 app.delete("/messages/:id", (req, res) => {
     res.send('Server is Running');
