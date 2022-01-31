@@ -16,6 +16,26 @@ mongoClient.connect(() => {
     db = mongoClient.db("bate-papo-UOL_DB");
 });
 
+setInterval(async () => {
+    try {
+        const participants = await db.collection("participants").find({}).toArray();
+        for (const participant of participants) {
+            if (Date.now() - participant.lastStatus > 10000) {
+                await db.collection('participants').deleteOne(participant);
+                db.collection("messages").insertOne({
+                    from: participant.name,
+                    to: 'Todos',
+                    text: 'sai da sala...',
+                    type: 'status',
+                    time: 'HH:mm:ss'
+                })
+            }
+        }
+    } catch {
+        error.sendStatus(500);
+    }
+}, 15000);
+
 //SCHEMAS
 const participantSchema = joi.object({
     name: joi.string().required()
@@ -50,7 +70,7 @@ app.post("/participants", async (req, res) => {
                 to: 'Todos',
                 text: 'entra na sala...',
                 type: 'status',
-                time: dayjs().format('hh:mm:ss')
+                time: dayjs().format('HH:mm:ss')
             })
             res.sendStatus(201);
         } catch {
@@ -82,7 +102,7 @@ app.post("/messages", (req, res) => {
             to: req.body.to,
             text: req.body.text,
             type: req.body.type,
-            time: dayjs().format('hh:mm:ss')
+            time: dayjs().format('HH:mm:ss')
         })
         res.sendStatus(201);
     } catch {
@@ -95,7 +115,7 @@ app.get("/messages", async (req, res) => {
         const messages = await db.collection("messages").find({
             $or:
                 [
-                    { to: "todos" },
+                    { to: "Todos" },
                     { to: req.header("User") },
                     { from: req.header("User") }
                 ]
@@ -110,15 +130,31 @@ app.get("/messages", async (req, res) => {
     }
 });
 app.delete("/messages/:id", (req, res) => {
-    res.send('Server is Running');
+    res.send('Delete not working yet');
 });
 app.put("/messages/:id", (req, res) => {
-    res.send('Server is Running');
+    res.send('Update not working yet');
 });
 
 //STATUS ROUTE
-app.post("/status", (req, res) => {
-    res.send('Server is Running');
+app.post("/status", async (req, res) => {
+    try {
+        const user = db.collection("participants").find({ name: req.header("User") });
+        if (user) {
+            await db.products.updateOne({
+                name: user
+            }, {
+                $set: {
+                    lastStatus: Date.now()
+                }
+            });
+            res.sendStatus(200);
+        } else {
+            res.sendStatus(404);
+        }
+    } catch {
+        res.sendStatus(500);
+    }
 });
 
 app.listen(process.env.PORT, () => {
